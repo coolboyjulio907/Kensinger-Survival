@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Kensinger Survival</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- ================= MAIN MENU ================= -->
+  <section id="menu" class="screen visible">
+    <div class="menu-buttons">
+      <button id="btn-start" class="btn btn-primary" disabled>LOADING&hellip;</button>
+      <button id="btn-settings" class="btn" data-i18n="settings">SETTINGS</button>
+    </div>
+    <div class="menu-hint" data-i18n="menuHint">WASD or Arrow Keys to move</div>
+    <div class="version">v0.5.0 — enemy system overhaul</div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section id="settings" class="screen screen-mapbg">
+    <div class="set-wrap">
+      <div id="set-tabs" class="set-tabs">
+        <button class="set-tab selected" data-tab="sound" data-i18n="sound">Sound</button>
+        <button class="set-tab" data-tab="video" data-i18n="video">Video</button>
+        <button class="set-tab" data-tab="gameplay" data-i18n="gameplay">Gameplay</button>
+        <button class="set-tab" data-tab="accessibility" data-i18n="accessibility">Accessibility</button>
+      </div>
+      <div class="set-body">
+        <!-- SOUND -->
+        <div id="set-sound" class="set-pane">
+          <div class="set-row">
+            <label data-i18n="master">Master</label>
+            <input type="range" id="set-master" class="slider" min="0" max="100" value="50">
+            <span class="slider-val" id="val-master">50%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="sfxVolume">Sound</label>
+            <input type="range" id="set-soundvol" class="slider" min="0" max="100" value="75">
+            <span class="slider-val" id="val-soundvol">75%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="music">Music</label>
+            <input type="range" id="set-music" class="slider" min="0" max="100" value="25">
+            <span class="slider-val" id="val-music">25%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="muteOnFocusLoss">Mute on losing focus</label>
+            <button id="set-muteonfocus" class="toggle-btn" data-setting="muteOnFocusLoss"></button>
+          </div>
+        </div>
+        <!-- VIDEO -->
+        <div id="set-video" class="set-pane hidden">
+          <div class="set-row">
+            <label data-i18n="language">Language</label>
+            <select id="set-language" class="select">
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="he">עברית</option>
+            </select>
+          </div>
+          <div class="set-row"><label data-i18n="screenshake">Screenshake</label><button class="toggle-btn" data-setting="screenshake"></button></div>
+          <div class="set-row"><label data-i18n="fullscreen">Fullscreen</label><button class="toggle-btn" data-setting="fullscreen"></button></div>
+          <div class="set-row"><label data-i18n="visualEffects">Visual Effects</label><button class="toggle-btn" data-setting="visualEffects"></button></div>
+          <div class="set-row"><label data-i18n="damageDisplay">Damage Display</label><button class="toggle-btn" data-setting="damageDisplay"></button></div>
+          <div class="set-row"><label data-i18n="optimizeEndOfWaves">Optimize end of waves</label><button class="toggle-btn" data-setting="optimizeEndOfWaves"></button></div>
+          <div class="set-row"><label data-i18n="limitFps">Limit FPS</label><button class="toggle-btn" data-setting="limitFps"></button></div>
+        </div>
+        <!-- GAMEPLAY -->
+        <div id="set-gameplay" class="set-pane hidden">
+          <div class="set-row"><label data-i18n="mouseOnly">Mouse Only</label><button class="toggle-btn" data-setting="mouseOnly"></button></div>
+          <!-- Manual aim rows removed (spec §7): combat is fully
+               automatic — the mouse never participates in attacks -->
+          <div class="set-row"><label data-i18n="gamepadMove">Movement with gamepad</label><button class="toggle-btn" data-setting="gamepadMove"></button></div>
+          <div class="set-row"><label data-i18n="hpBarChar">HP bar on character</label><button class="toggle-btn" data-setting="hpBarChar"></button></div>
+          <div class="set-row"><label data-i18n="hpBarBosses">HP bar on bosses</label><button class="toggle-btn" data-setting="hpBarBosses"></button></div>
+        </div>
+        <!-- ACCESSIBILITY -->
+        <div id="set-accessibility" class="set-pane hidden">
+          <!-- Hidden dev console toggle: VISIBLE ONLY while Hebrew is the
+               selected language. Visibility is independent of the persisted
+               devMode state (spec §4). -->
+          <div class="set-row" id="row-devmode" style="display:none">
+            <label data-i18n="devMode">Dev Mode</label>
+            <button class="toggle-btn" data-setting="devMode"></button>
+          </div>
+          <div class="set-row">
+            <label data-i18n="explosionOpacity">Explosion Opacity</label>
+            <input type="range" id="set-explosion" class="slider" min="0" max="100" value="100">
+            <span class="slider-val" id="val-explosion">100%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="projectileOpacity">Projectile Opacity</label>
+            <input type="range" id="set-projectile" class="slider" min="0" max="100" value="100">
+            <span class="slider-val" id="val-projectile">100%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="petOpacity">Pet Opacity</label>
+            <input type="range" id="set-pet" class="slider" min="0" max="100" value="100">
+            <span class="slider-val" id="val-pet">100%</span>
+          </div>
+          <div class="set-row">
+            <label data-i18n="fontSize">Font Size</label>
+            <input type="range" id="set-fontsize" class="slider" min="80" max="125" value="100">
+            <span class="slider-val" id="val-fontsize">100%</span>
+          </div>
+          <div class="set-row"><label data-i18n="hlCharacter">Character Highlighting</label><button class="toggle-btn" data-setting="hlCharacter"></button></div>
+          <div class="set-row"><label data-i18n="hlWeapons">Weapons Highlighting</label><button class="toggle-btn" data-setting="hlWeapons"></button></div>
+          <div class="set-row"><label data-i18n="hlProjectiles">Projectiles Highlighting</label><button class="toggle-btn" data-setting="hlProjectiles"></button></div>
+          <div class="set-row"><label data-i18n="hlTurrets">Turrets Highlighting</label><button class="toggle-btn" data-setting="hlTurrets"></button></div>
+          <div class="set-row"><label data-i18n="hlPets">Pets Highlighting</label><button class="toggle-btn" data-setting="hlPets"></button></div>
+          <div class="set-row"><label data-i18n="showEffectIcons">Show effects icons</label><button class="toggle-btn" data-setting="showEffectIcons"></button></div>
+          <div class="set-row"><label data-i18n="changeMaterialSounds">Change material sounds</label><button class="toggle-btn" data-setting="changeMaterialSounds"></button></div>
+          <div class="set-row"><label data-i18n="screenDarkening">Screen darkening</label><button class="toggle-btn" data-setting="screenDarkening"></button></div>
+          <div class="set-row"><label data-i18n="retryFailedWaves">Retry failed waves</label><button class="toggle-btn" data-setting="retryFailedWaves"></button></div>
+        </div>
+      </div>
+      <button id="btn-settings-back" class="btn" data-i18n="back">BACK</button>
+    </div>
+  </section>
+
+  <!-- ================= CHARACTER SELECT ================= -->
+  <section id="characters" class="screen screen-mapbg">
+    <div class="cs-wrap">
+      <div id="cs-preview" class="cs-preview">
+        <div class="cs-preview-head"><h2 id="cs-preview-title"></h2>
+          <div id="cs-preview-tag" class="cs-preview-tag"></div>
+        </div>
+        <div class="cs-preview-body">
+          <div class="cs-preview-imgbox"><img id="cs-preview-img" alt=""></div>
+          <div id="cs-preview-stats" class="cs-preview-stats"></div>
+        </div>
+      </div>
+
+      <div class="cs-midrow">
+        <div class="side-box">
+          <h3 data-i18n="record">RECORD</h3>
+          <div id="cs-record" class="side-box-body"></div>
+        </div>
+        <div class="side-box runopts">
+          <h3 data-i18n="runOptions">RUN OPTIONS</h3>
+          <div class="side-box-body">
+            <div class="ro-row">
+              <button id="btn-map" class="ro-btn map-btn">🗺️ <span id="map-label">Plains</span> <span class="caret">▾</span></button>
+              <div id="map-list" class="map-list hidden">
+                <button class="map-item selected" data-map="plains"><span data-i18n="plains">Plains</span> ✓</button>
+                <button class="map-item unavailable" data-map="desert" disabled><span data-i18n="desertLocked">Desert — unavailable</span></button>
+              </div>
+            </div>
+            <button id="btn-endless" class="ro-btn"><span id="endless-state">▢</span> <span data-i18n="endlessMode">Endless Mode</span></button>
+            <button id="btn-coop" class="ro-btn">👥 <span data-i18n="coop">Co-Op</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="char-slots" class="slot-row"></div>
+      <button id="btn-chars-back" class="btn back-btn" data-i18n="back">BACK</button>
+    </div>
+  </section>
+
+  <!-- ================= WEAPON SELECT ================= -->
+  <section id="weapons" class="screen screen-mapbg">
+    <div class="cs-wrap">
+      <div class="ws-mainrow">
+        <div class="ws-char">
+          <div class="cs-preview-imgbox ws-char-imgbox"><img id="ws-char-img" alt=""></div>
+          <h2 id="ws-char-title" class="ws-char-title"></h2>
+          <div id="ws-char-stats" class="cs-preview-stats ws-char-stats"></div>
+        </div>
+        <div class="wp-info">
+          <div class="wp-info-head">
+            <div class="wp-info-imgbox"><img id="wp-img" alt=""></div>
+            <h3 id="wp-title"></h3>
+          </div>
+          <div id="wp-desc" class="wp-desc"></div>
+          <div id="wp-stats" class="wp-stats"></div>
+        </div>
+      </div>
+
+      <div id="weapon-slots" class="slot-row"></div>
+      <button id="btn-weapons-back" class="btn back-btn" data-i18n="back">BACK</button>
+    </div>
+  </section>
+
+  <!-- ================= DIFFICULTY SELECT ================= -->
+  <section id="difficulty" class="screen screen-mapbg">
+    <div class="cs-wrap">
+      <div class="ws-mainrow">
+        <div class="ws-char">
+          <div class="cs-preview-imgbox ws-char-imgbox"><img id="ds-char-img" alt=""></div>
+          <h2 id="ds-char-title" class="ws-char-title"></h2>
+          <div id="ds-char-stats" class="cs-preview-stats ws-char-stats"></div>
+        </div>
+        <div class="wp-info">
+          <div class="wp-info-head">
+            <div class="wp-info-imgbox diff-badge"><span id="dp-badge"></span></div>
+            <h3 id="dp-title"></h3>
+          </div>
+          <div id="dp-desc" class="wp-desc"></div>
+          <div id="dp-stats" class="wp-stats"></div>
+        </div>
+      </div>
+
+      <div id="diff-slots" class="slot-row diff-row"></div>
+      <button id="btn-diff-back" class="btn back-btn" data-i18n="back">BACK</button>
+    </div>
+  </section>
+
+  <!-- ================= IN-GAME HUD ================= -->
+  <section id="hud" class="screen">
+    <div class="hud-top">
+      <div class="hp-bar"><div id="hp-fill"></div><span id="hp-text"></span></div>
+      <div class="hud-mid">
+        <div id="wave-label" class="wave-label">WAVE 1</div>
+        <div id="timer" class="timer">00</div>
+      </div>
+      <div class="hud-right">
+        <div id="materials" class="materials"><span class="mat-cube"></span><span id="materials-n">0</span></div>
+        <div id="kills" class="kills">☠ 0</div>
+      </div>
+    </div>
+    <div id="weapon-slot" class="weapon-slot">
+      <div class="weapon-icon-wrap">
+        <img id="weapon-icon" alt="Weapon icon">
+        <div id="weapon-cd" class="weapon-cd"></div>
+      </div>
+      <div class="weapon-info">
+        <div id="weapon-name" class="weapon-name"></div>
+        <div id="weapon-tier" class="weapon-tier"></div>
+      </div>
+    </div>
+    <div class="hint" data-i18n="hintMove">WASD / Arrows to move · ESC to pause</div>
+    <!-- boss health bars: one segment per active boss -->
+    <div id="bossbar" class="bossbar hidden">
+      <div id="bossbar-name" class="bossbar-name"></div>
+      <div id="bossbar-bars" class="bossbar-bars"></div>
+    </div>
+    <!-- enemy-system debugging overlay (toggle: B) -->
+    <div id="debugpanel" class="debugpanel hidden"></div>
+  </section>
+
+  <!-- ================= WAVE COMPLETED BANNER ================= -->
+  <div id="wavebanner" class="wavebanner hidden">
+    <div class="wavebanner-text" id="wavebanner-text"></div>
+    <div class="wavebanner-sub" id="wavebanner-sub"></div>
+  </div>
+
+  <!-- ================= LOOT CRATE REWARD ================= -->
+  <section id="cratereward" class="screen breakscreen">
+    <div class="break-wrap">
+      <h2 id="cr-title" class="break-title">LOOT CRATE</h2>
+      <div class="cr-card" id="cr-card">
+        <div class="cr-icon" id="cr-icon">📦</div>
+        <div class="cr-info">
+          <div class="cr-name" id="cr-name">Item</div>
+          <div class="cr-tier" id="cr-tier">Tier 1</div>
+          <div class="cr-fx" id="cr-fx"></div>
+        </div>
+      </div>
+      <div class="cr-remaining" id="cr-remaining"></div>
+      <div class="cr-btns">
+        <button id="btn-cr-take" class="cr-btn take">TAKE</button>
+        <button id="btn-cr-recycle" class="cr-btn recycle">RECYCLE</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LEVEL UP ================= -->
+  <section id="levelup" class="screen breakscreen">
+    <div class="break-wrap">
+      <h2 id="lu-title" class="break-title">LEVEL UP!</h2>
+      <div class="break-cols">
+        <div class="lu-left">
+          <div id="lu-choices" class="lu-choices"></div>
+          <button id="btn-lu-reroll" class="reroll-btn">
+            <span class="key-chip">F</span>
+            <span id="lu-reroll-label">Reroll (2)</span>
+          </button>
+          <div id="lu-remaining" class="lu-remaining"></div>
+        </div>
+        <div class="break-stats">
+          <div class="pm-stats-head">
+            <span class="pm-stats-icon">📊</span>
+            <span class="pm-stats-word" data-i18n="stats">STATS</span>
+          </div>
+          <div id="lu-stats-list" class="pm-stats-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SHOP ================= -->
+  <section id="shop" class="screen breakscreen">
+    <div class="break-wrap">
+      <h2 id="shop-title" class="break-title shop-title">Shop (Wave 1)</h2>
+      <div class="break-cols">
+        <div class="shop-left">
+          <div class="shop-matbar">
+            <span class="mat-cube big"></span><span id="shop-materials" class="shop-mat-n">0</span>
+          </div>
+          <div id="shop-cards" class="shop-cards"></div>
+          <div class="shop-undergrid">
+            <div class="shop-owned-items">
+              <div class="owned-label" data-i18n="items">Items</div>
+              <div id="shop-owned-items" class="owned-row"></div>
+            </div>
+            <div class="shop-owned-weapons">
+              <div class="owned-label" data-i18n="weapons">Weapons</div>
+              <div id="shop-owned-weapons" class="owned-row"></div>
+              <div class="owned-hint" data-i18n="wmHint">Click a weapon to sell or combine it</div>
+            </div>
+          </div>
+          <button id="btn-shop-reroll" class="reroll-btn">
+            <span class="key-chip">R</span>
+            <span id="shop-reroll-label">Reroll (1)</span>
+          </button>
+        </div>
+        <div class="break-stats">
+          <div class="pm-stats-head">
+            <span class="pm-stats-icon">📊</span>
+            <span class="pm-stats-word" data-i18n="stats">STATS</span>
+          </div>
+          <div id="shop-stats-list" class="pm-stats-list"></div>
+          <button id="btn-shop-go" class="btn btn-primary go-btn">Go (Wave 2)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- sell / combine an owned weapon -->
+    <div id="wep-manage" class="wep-manage hidden">
+      <div class="wep-manage-box">
+        <button id="btn-wm-close" class="wm-close">✕</button>
+        <div class="wm-head">
+          <div id="wm-icon" class="wm-icon"></div>
+          <div>
+            <div id="wm-name" class="wm-name">Fist</div>
+            <div id="wm-tier" class="wm-tier">T1 · Common</div>
+          </div>
+        </div>
+        <div id="wm-stats" class="wm-stats"></div>
+        <div class="wm-btns">
+          <button id="btn-wm-sell" class="btn wm-sell">Sell</button>
+          <button id="btn-wm-combine" class="btn wm-combine">Combine</button>
+        </div>
+        <div id="wm-hint" class="wm-hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PAUSE ================= -->
+  <section id="pause" class="screen">
+    <div class="pause-veil"></div>
+    <div class="pause-ui">
+      <div class="pm-left">
+        <button id="btn-resume"  class="pm-btn primary" data-i18n="resume">RESUME</button>
+        <button id="btn-restart" class="pm-btn" data-i18n="restart">RESTART</button>
+        <button id="btn-endrun"  class="pm-btn" data-i18n="endrun">END THE RUN</button>
+        <button id="btn-quit"    class="pm-btn" data-i18n="quit">QUIT TO MENU</button>
+      </div>
+
+      <div class="pm-center">
+        <div class="pm-group">
+          <div class="pm-title" id="pm-weapons-title">Weapons (1/6)</div>
+          <div id="pm-weapons" class="pm-icons"></div>
+        </div>
+        <div class="pm-group">
+          <div class="pm-title" id="pm-items-title">Items (0)</div>
+          <div id="pm-items" class="pm-icons"></div>
+        </div>
+      </div>
+
+      <div class="pm-right">
+        <div class="pm-stats-head">
+          <span class="pm-stats-icon">📊</span>
+          <span class="pm-stats-word" data-i18n="stats">STATS</span>
+          <button id="btn-stats-toggle" class="pm-toggle">Secondary ▸</button>
+        </div>
+        <div id="pm-stats-list" class="pm-stats-list"></div>
+      </div>
+
+      <div id="pm-wavebar" class="pm-wavebar">
+        <div id="pm-dots" class="pm-dots">
+          <div id="pm-marker" class="pm-marker"><img id="pm-marker-img" alt=""></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- confirmation overlay — hides ALL pause UI -->
+    <div id="pm-confirm" class="pm-confirm hidden">
+      <div class="pm-confirm-box">
+        <h3 id="pm-confirm-title">ARE YOU SURE?</h3>
+        <p id="pm-confirm-text"></p>
+        <div class="pm-confirm-btns">
+          <button id="btn-confirm-yes" class="btn btn-primary" data-i18n="confirm">CONFIRM</button>
+          <button id="btn-confirm-no" class="btn" data-i18n="cancel">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME OVER / VICTORY ================= -->
+  <section id="gameover" class="screen">
+    <div class="panel stack">
+      <h2 id="go-title" class="dead">YOU DIED</h2>
+      <div class="go-stats">
+        <div><span data-i18n="timeSurvived">Time survived</span> <b id="go-time">00:00</b></div>
+        <div><span data-i18n="enemiesKilled">Enemies killed</span> <b id="go-kills">0</b></div>
+        <div><span data-i18n="waveReached">Wave reached</span> <b id="go-wave">1</b></div>
+      </div>
+      <button id="btn-retry" class="btn btn-primary" data-i18n="retry">RETRY</button>
+      <button id="btn-retry-wave" class="btn btn-primary hidden" data-i18n="retryWave">RETRY WAVE</button>
+      <button id="btn-continue" class="btn hidden" data-i18n="continueEndless">CONTINUE (ENDLESS)</button>
+      <button id="btn-go-endrun" class="btn" data-i18n="endrun">END RUN</button>
+      <button id="btn-go-menu" class="btn" data-i18n="menu">MENU</button>
+    </div>
+  </section>
+
+  <div id="tooltip" class="tooltip hidden"></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/records.js"></script>
+  <script src="js/upgrades.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/loot.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/devmode.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
